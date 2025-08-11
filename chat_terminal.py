@@ -16,8 +16,20 @@ from datetime import datetime, date
 import sys
 
 # Configuration
-BASE_URL = "http://localhost:8547/api/ConsumerApi/v1/Restaurant/TheHungryUnicorn"
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImFwcGVsbGErYXBpQHJlc2RpYXJ5LmNvbSIsIm5iZiI6MTc1NDQzMDgwNSwiZXhwIjoxNzU0NTE3MjA1LCJpYXQiOjE3NTQ0MzA4MDUsImlzcyI6IlNlbGYiLCJhdWQiOiJodHRwczovL2FwaS5yZXNkaWFyeS5jb20ifQ.g3yLsufdk8Fn2094SB3J3XW-KdBc0DY9a2Jiu_56ud8"
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Load from environment variables
+BASE_URL_PREFIX = os.getenv("BASE_URL_PREFIX", "http://localhost:8547/api/ConsumerApi/v1/Restaurant")
+RESTAURANT = os.getenv("RESTAURANT", "TheHungryUnicorn")
+BASE_URL = f"{BASE_URL_PREFIX}/{RESTAURANT}"
+
+TOKEN = os.getenv("BOOKING_API_TOKEN")
+if not TOKEN:
+    raise RuntimeError("BOOKING_API_TOKEN environment variable is required. Please set it in your .env file or environment.")
 
 # Headers for API requests
 HEADERS = {
@@ -158,7 +170,7 @@ class TerminalBookingAssistant:
         return None
     
     def extract_time(self, text):
-        """Extract time from text"""
+        """Extract time from text and normalize to HH:MM:SS format"""
         time_patterns = [
             r'(\d{1,2}):(\d{2})\s*(am|pm)?',
             r'(\d{1,2})\s*(am|pm)',
@@ -185,9 +197,44 @@ class TerminalBookingAssistant:
                     elif ampm == 'am' and hour == 12:
                         hour = 0
                 
-                return f"{hour:02d}:{minute:02d}"
+                # Normalize to HH:MM:SS format
+                return f"{hour:02d}:{minute:02d}:00"
         
         return None
+    
+    def validate_party_size(self, size):
+        """Validate party size is within acceptable range"""
+        if not size or not isinstance(size, int):
+            return False, "Party size must be a number"
+        if size < 1 or size > 20:
+            return False, "Party size must be between 1 and 20 people"
+        return True, None
+    
+    def validate_date(self, date_str):
+        """Validate date format and ensure it's not in the past"""
+        try:
+            # Parse the date
+            parsed_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            today = datetime.now().date()
+            
+            if parsed_date < today:
+                return False, "Date cannot be in the past"
+            
+            return True, None
+        except ValueError:
+            return False, "Invalid date format. Please use YYYY-MM-DD"
+    
+    def validate_time(self, time_str):
+        """Validate time format"""
+        if not time_str:
+            return False, "Time is required"
+        
+        # Check if it's in HH:MM:SS format
+        time_pattern = r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'
+        if not re.match(time_pattern, time_str):
+            return False, "Time must be in HH:MM:SS format"
+        
+        return True, None
     
     def handle_availability_search(self, user_message):
         """Handle availability search requests"""

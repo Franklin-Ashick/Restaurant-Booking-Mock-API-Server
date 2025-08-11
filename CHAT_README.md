@@ -10,6 +10,10 @@ A complete restaurant booking system with an intelligent chat interface that all
 # Install dependencies
 pip install -r requirements.txt
 
+# Set up environment variables
+cp env.example .env
+# Edit .env with your API token and configuration
+
 # Start the mock API server
 python -m app
 
@@ -91,10 +95,24 @@ python chat_app.py
 
 ### Environment Variables
 
-```python
-BASE_URL = "http://localhost:8547/api/ConsumerApi/v1/Restaurant/TheHungryUnicorn"
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+Create a `.env` file based on `env.example`:
+
+```bash
+# Copy the example file
+cp env.example .env
+
+# Edit .env with your values
+BOOKING_API_TOKEN=your-token-here
+BASE_URL_PREFIX=http://localhost:8547/api/ConsumerApi/v1/Restaurant
+RESTAURANT=TheHungryUnicorn
+FLASK_SECRET_KEY=your-secret-key
+FLASK_DEBUG=True
 ```
+
+**Required Variables:**
+- `BOOKING_API_TOKEN`: Your API authentication token
+- `BASE_URL_PREFIX`: Base URL for the API
+- `RESTAURANT`: Restaurant name identifier
 
 ### Bearer Token Setup
 

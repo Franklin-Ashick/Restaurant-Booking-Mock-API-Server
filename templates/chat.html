@@ -179,6 +179,57 @@
             transform: translateY(-2px);
         }
 
+        /* Time button styling */
+        .time-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .time-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #218838, #1ea085);
+        }
+
+        .time-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Quick action button styling */
+        .quick-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 8px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            display: inline-block;
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #5a6fd8, #6a4190);
+        }
+
+        .quick-btn:active {
+            transform: translateY(0);
+        }
+
         .send-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -432,6 +483,12 @@
             sendMessage(message);
         }
 
+        // Handle time selection from buttons
+        function selectTime(time, date, partySize) {
+            const message = `Book a table for ${partySize} people on ${date} at ${time}`;
+            sendMessage(message);
+        }
+
         // Check API status
         async function checkApiStatus() {
             try {
@@ -468,8 +525,26 @@
             }
         });
 
+        // Load welcome message on page load
+        async function loadWelcomeMessage() {
+            try {
+                const response = await fetch('/welcome');
+                const data = await response.json();
+                if (data.reply) {
+                    addMessage(data.reply, false);
+                }
+            } catch (error) {
+                console.error('Error loading welcome message:', error);
+                // Fallback welcome message
+                addMessage('Welcome to The Hungry Unicorn! 🦄 How can I help you today?', false);
+            }
+        }
+
         // Focus input on load
         messageInput.focus();
+
+        // Load welcome message
+        loadWelcomeMessage();
 
         // Check status periodically
         setInterval(checkApiStatus, 30000); // Every 30 seconds
