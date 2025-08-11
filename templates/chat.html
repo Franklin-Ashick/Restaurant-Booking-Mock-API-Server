@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Booking Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.disconnected {
+            background: #e74c3c;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin: 0 10px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .typing-indicator.show {
+            display: block;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            color: #495057;
+        }
+
+        .quick-action:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .welcome-message h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .welcome-message p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .emoji {
+            font-size: 20px;
+            margin: 0 5px;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 90vh;
+                border-radius: 15px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .quick-actions {
+                justify-content: center;
+            }
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .success-message {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #363;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <h1>🍽️ Restaurant Booking Assistant</h1>
+            <p>Powered by AI - Let me help you book your perfect table!</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <h2>Welcome to The Hungry Unicorn! 🦄</h2>
+                <p>I'm your personal booking assistant. I can help you:</p>
+                <p>• Check table availability 📅</p>
+                <p>• Make reservations 🎯</p>
+                <p>• View your booking details 📋</p>
+                <p>• Modify existing bookings ✏️</p>
+                <p>• Cancel bookings ❌</p>
+                <p><br>Just start typing or use the quick actions below!</p>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <div class="quick-action" onclick="sendQuickMessage('Check availability for August 6th for 4 people')">
+                🔍 Check Availability
+            </div>
+            <div class="quick-action" onclick="sendQuickMessage('Book a table for 2 people on August 7th at 7 PM')">
+                📅 Make Booking
+            </div>
+            <div class="quick-action" onclick="sendQuickMessage('Show my booking')">
+                📋 My Booking
+            </div>
+            <div class="quick-action" onclick="sendQuickMessage('help')">
+                ❓ Help
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <span class="emoji">🤖</span> Assistant is typing...
+        </div>
+
+        <div class="chat-input-container">
+            <form class="chat-input-form" id="chatForm">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="messageInput" 
+                    placeholder="Type your message here... (e.g., 'Check availability for tomorrow')"
+                    autocomplete="off"
+                >
+                <button type="submit" class="send-button" id="sendButton">
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatForm = document.getElementById('chatForm');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        let isTyping = false;
+
+        // Check API status on load
+        checkApiStatus();
+
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Add message to chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.innerHTML = isUser ? '👤' : '🤖';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.innerHTML = content.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Show typing indicator
+        function showTyping() {
+            if (!isTyping) {
+                isTyping = true;
+                typingIndicator.classList.add('show');
+                scrollToBottom();
+            }
+        }
+
+        // Hide typing indicator
+        function hideTyping() {
+            isTyping = false;
+            typingIndicator.classList.remove('show');
+        }
+
+        // Send message
+        async function sendMessage(message) {
+            if (!message.trim()) return;
+
+            // Add user message
+            addMessage(message, true);
+            messageInput.value = '';
+
+            // Show typing indicator
+            showTyping();
+
+            try {
+                const response = await fetch('/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                
+                // Hide typing indicator
+                hideTyping();
+
+                // Add assistant response
+                if (data.reply) {
+                    addMessage(data.reply, false);
+                }
+
+                // Handle specific actions
+                if (data.action === 'error') {
+                    // Could add error styling here
+                }
+
+            } catch (error) {
+                hideTyping();
+                addMessage('Sorry, I encountered an error. Please try again.', false);
+                console.error('Error:', error);
+            }
+        }
+
+        // Quick message function
+        function sendQuickMessage(message) {
+            sendMessage(message);
+        }
+
+        // Check API status
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                if (data.status === 'connected') {
+                    statusIndicator.classList.remove('disconnected');
+                } else {
+                    statusIndicator.classList.add('disconnected');
+                }
+            } catch (error) {
+                statusIndicator.classList.add('disconnected');
+            }
+        }
+
+        // Form submission
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+                sendMessage(message);
+            }
+        });
+
+        // Enter key handling
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const message = messageInput.value.trim();
+                if (message) {
+                    sendMessage(message);
+                }
+            }
+        });
+
+        // Focus input on load
+        messageInput.focus();
+
+        // Check status periodically
+        setInterval(checkApiStatus, 30000); // Every 30 seconds
+    </script>
+</body>
+</html>
